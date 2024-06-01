@@ -1,9 +1,8 @@
-import logging
 import random
 import subprocess
-import multiprocessing as mp
 import time
 from datetime import datetime, timedelta
+from config import logging
 
 logger = logging.getLogger(__name__)
 
@@ -21,18 +20,42 @@ def adb(command: str, capture_output: bool = True):
     return subprocess.run(f"adb {command}", capture_output=capture_output)
 
 
-def get_devices_with_resolutions():
+def initialize() -> None:
+    """
+    Killing and starting an adb process.
+    """
+    logger.info("Killing adb server...")
+    adb("kill-server")
+    logger.info("Starting adb server...")
+    adb("start-server")
+    logger.info("Waiting 20 secs for devices...")
+    time.sleep(20)
+
+
+def get_devices_with_resolutions() -> list[list[str]] | list:
+    """
+    Find all devices with their resolutions.
+    :return: list of lists of devices with resolutions.
+    """
     result = adb("devices").stdout.decode("utf-8").split()
     devices = [[el] for el in result if el not in ("List", "of", "devices", "attached", "device")]
+    if not devices:
+        logger.error("No devices found")
+        return []
     for i in range(len(devices)):
         resolution = adb(f"-s {devices[i][0]} shell wm size").stdout.decode("utf-8").split()[-1].split("x")
         devices[i].extend([int(resolution[0]), int(resolution[1])])
     return devices
 
 
-def start():
-    logger.info("Getting devices...")
+def start() -> None:
+    """
+    The entry poing of app
+    """
+    initialize()
     devices_with_resolutions = get_devices_with_resolutions()
+    if not devices_with_resolutions:
+        return
     logger.info(f"Devices' list: {devices_with_resolutions}")
     start_time = datetime.now()
     while True:
