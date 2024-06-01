@@ -20,18 +20,6 @@ def adb(command: str, capture_output: bool = True):
     return subprocess.run(f"adb {command}", capture_output=capture_output)
 
 
-def initialize() -> None:
-    """
-    Killing and starting an adb process.
-    """
-    logger.info("Killing adb server...")
-    adb("kill-server")
-    logger.info("Starting adb server...")
-    adb("start-server")
-    logger.info("Waiting 20 secs for devices...")
-    time.sleep(20)
-
-
 def get_devices_with_resolutions() -> list[list[str]] | list:
     """
     Find all devices with their resolutions.
@@ -52,7 +40,6 @@ def start() -> None:
     """
     The entry poing of app
     """
-    initialize()
     devices_with_resolutions = get_devices_with_resolutions()
     if not devices_with_resolutions:
         return
